@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#9b5d32">
+  <title>あおの きょうりゅう はっくつたい</title>
+  <style>
+    :root{--cream:#fff7df;--brown:#5c351f;--orange:#e67e32;--green:#477b45;--sky:#bfe6e2}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;min-height:100%;overscroll-behavior:none}
+    body{font-family:"Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;background:linear-gradient(#bfe6e2 0 34%,#d9ad68 34%);color:var(--brown);display:flex;justify-content:center;touch-action:manipulation}
+    button{font:inherit;color:inherit}
+    .app{width:min(100%,560px);min-height:100dvh;padding:max(10px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:9px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    h1{font-size:clamp(18px,5.2vw,28px);margin:0;text-shadow:0 2px #fff8;letter-spacing:.03em}
+    .badge{flex:none;background:var(--cream);border:3px solid var(--brown);border-radius:999px;padding:5px 10px;font-weight:900;font-size:15px;box-shadow:0 3px #78472b}
+    .stage{position:relative;flex:1;min-height:410px;border:5px solid #78472b;border-radius:22px;overflow:hidden;background:#d5a45f;box-shadow:0 7px 0 #50301f,0 11px 18px #51331f55;touch-action:none}
+    canvas{display:block;width:100%;height:100%;cursor:crosshair}
+    .message{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:max-content;max-width:92%;padding:7px 13px;border-radius:999px;background:#fff8e8e8;border:2px solid #6d452e;font-weight:900;text-align:center;pointer-events:none;opacity:0;transition:.2s;z-index:2}
+    .message.show{opacity:1;transform:translate(-50%,2px)}
+    .toolbar{display:grid;grid-template-columns:1fr 1fr .8fr;gap:8px}
+    .tool{min-height:61px;border:3px solid var(--brown);border-radius:17px;background:#fff4d2;box-shadow:0 4px #78472b;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;gap:5px;padding:5px}
+    .tool:active{transform:translateY(3px);box-shadow:0 1px #78472b}
+    .tool.selected{background:#f9b64d;outline:3px solid #fff7df}
+    .tool span{font-size:27px}
+    .hint{background:#b9e47d}
+    .tip{text-align:center;font-weight:800;font-size:13px;margin:0;color:#604027}
+    .overlay{position:fixed;inset:0;background:#18372dd9;display:none;align-items:center;justify-content:center;padding:18px;z-index:10}
+    .overlay.open{display:flex;animation:fade .35s}
+    .card{position:relative;width:min(100%,500px);max-height:92dvh;overflow:auto;background:var(--cream);border:5px solid var(--brown);border-radius:25px;padding:18px;text-align:center;box-shadow:0 12px 30px #0007}
+    .card h2{font-size:clamp(25px,8vw,38px);margin:0;color:#a94222}
+    .card p{font-weight:900;margin:5px 0 8px}
+    .skeleton{width:100%;height:auto;max-height:43dvh}
+    .again{border:3px solid var(--brown);background:#f49a3e;border-radius:16px;padding:11px 22px;font-weight:900;font-size:18px;box-shadow:0 4px #78472b}
+    @keyframes fade{from{opacity:0}to{opacity:1}}
+    @media (max-height:650px){.stage{min-height:300px}.tool{min-height:50px}.tip{display:none}}
+    @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>🦖 あおの きょうりゅう はっくつたい</h1>
+      <div class="badge" aria-live="polite">🦴 <b id="count">0</b> / 8</div>
+    </header>
+    <section class="stage" id="stage" aria-label="砂を掘る発掘エリア">
+      <canvas id="dig"></canvas>
+      <div class="message" id="message" aria-live="polite"></div>
+    </section>
+    <div class="toolbar">
+      <button class="tool selected" id="brush" type="button" aria-pressed="true"><span>🖌️</span>ブラシ</button>
+      <button class="tool" id="hammer" type="button" aria-pressed="false"><span>🔨</span>ハンマー</button>
+      <button class="tool hint" id="hint" type="button"><span>💡</span>ヒント</button>
+    </div>
+    <p class="tip">ゆびで すなを こすって、ほねを 8こ みつけよう！</p>
+  </main>
+
+  <div class="overlay" id="complete" role="dialog" aria-modal="true" aria-labelledby="completeTitle">
+    <div class="card">
+      <h2 id="completeTitle">🎉 かんせい！</h2>
+      <p>ティラノサウルスの ほねが そろったよ！</p>
+      <svg class="skeleton" viewBox="0 0 500 280" role="img" aria-label="完成したティラノサウルスの骨格">
+        <g fill="none" stroke="#70543b" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M392 64c28-18 66-8 79 18-13 19-42 31-75 20l-22-15z" fill="#f0ddae"/>
+          <circle cx="441" cy="75" r="5" fill="#70543b"/><path d="M403 91l51 3M397 104l32 13M383 99l-34 29"/>
+          <path d="M379 112c-67 3-132 21-196 43-51 18-102 21-147 11"/>
+          <path d="M351 128c-62 18-119 42-181 49-51 6-91 2-126-5" stroke-width="4"/>
+          <ellipse cx="302" cy="148" rx="62" ry="45" fill="#f0ddae"/>
+          <path d="M275 132c11 12 11 29 0 43M297 119c14 16 15 42 0 61M321 115c13 17 13 46 0 67M344 119c10 15 10 36-1 55" stroke-width="5"/>
+          <path d="M281 180l-26 50 8 36M321 183l29 45-3 37M258 230l-23 30M350 228l22 28M263 266h-32M347 265h32"/>
+          <path d="M344 143l33 30 30 2M330 151l31 37 29 5" stroke-width="6"/>
+        </g>
+      </svg>
+      <button class="again" id="again" type="button">もういちど あそぶ</button>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    'use strict';
+    const canvas = document.querySelector('#dig');
+    const ctx = canvas.getContext('2d');
+    const stage = document.querySelector('#stage');
+    const countEl = document.querySelector('#count');
+    const message = document.querySelector('#message');
+    const complete = document.querySelector('#complete');
+    const brushBtn = document.querySelector('#brush');
+    const hammerBtn = document.querySelector('#hammer');
+    let W=0,H=0,dpr=1,tool='brush',dragging=false,bones=[],particles=[],hint=null,msgTimer=0,audio=null;
+
+    const shapes = [
+      (c)=>{c.ellipse(0,0,23,14,0,0,Math.PI*2);c.moveTo(17,-8);c.lineTo(34,-16);c.lineTo(31,1);c.lineTo(17,8)},
+      (c)=>{c.moveTo(-25,0);c.lineTo(25,0);c.moveTo(-19,-9);c.lineTo(-19,9);c.moveTo(-6,-12);c.lineTo(-6,12);c.moveTo(7,-12);c.lineTo(7,12);c.moveTo(20,-9);c.lineTo(20,9)},
+      (c)=>{c.moveTo(-25,-14);c.quadraticCurveTo(0,22,25,-14);c.moveTo(-13,-2);c.lineTo(13,-2)},
+      (c)=>{c.moveTo(-28,0);c.lineTo(28,0);c.moveTo(-25,-7);c.lineTo(-25,7);c.moveTo(25,-7);c.lineTo(25,7)},
+      (c)=>{c.ellipse(-12,0,14,18,0,0,Math.PI*2);c.ellipse(12,0,14,18,0,0,Math.PI*2)},
+      (c)=>{c.moveTo(-22,-14);c.lineTo(0,0);c.lineTo(-20,18);c.moveTo(0,0);c.lineTo(26,13)},
+      (c)=>{c.moveTo(-25,-10);c.quadraticCurveTo(2,10,28,5);c.moveTo(-5,2);c.lineTo(-12,16)},
+      (c)=>{c.moveTo(-27,8);c.quadraticCurveTo(0,-18,27,5);c.moveTo(18,0);c.lineTo(31,-9)}
+    ];
+
+    function resize(){
+      const r=stage.getBoundingClientRect(); dpr=Math.min(devicePixelRatio||1,2); W=r.width; H=r.height;
+      canvas.width=Math.round(W*dpr); canvas.height=Math.round(H*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); draw();
+    }
+    function reset(){
+      bones=[]; particles=[]; hint=null; countEl.textContent='0'; complete.classList.remove('open');
+      const margin=55, cols=2, rows=4, cellW=(W-margin*2)/cols, cellH=(H-margin*2)/rows;
+      for(let i=0;i<8;i++){
+        const col=i%cols,row=Math.floor(i/cols);
+        bones.push({x:margin+cellW*(col+.2+Math.random()*.6),y:margin+cellH*(row+.2+Math.random()*.6),a:(Math.random()-.5)*1.3,progress:0,found:false,shape:i});
+      }
+      for(let i=0;i<150;i++)particles.push({x:Math.random()*W,y:Math.random()*H,r:1+Math.random()*4,o:.12+Math.random()*.25,dug:0});
+      draw(); say('はっくつ スタート！');
+    }
+    function bonePath(b){const p=new Path2D(); shapes[b.shape](p); return p}
+    function draw(){
+      if(!W||!H)return;
+      const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#e7bd78');g.addColorStop(1,'#c88b45');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+      ctx.save();ctx.strokeStyle='#a66d37';ctx.lineWidth=1;
+      particles.forEach(p=>{if(p.dug<1){ctx.globalAlpha=p.o*(1-p.dug);ctx.fillStyle='#81512c';ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill()}});ctx.restore();
+      bones.forEach(b=>{
+        if(b.progress<=0)return; ctx.save();ctx.translate(b.x,b.y);ctx.rotate(b.a);
+        ctx.globalAlpha=Math.min(1,.16+b.progress/70);ctx.fillStyle='#f5e5b7';ctx.strokeStyle='#745638';ctx.lineWidth=4;
+        const p=bonePath(b);ctx.fill(p);ctx.stroke(p);
+        if(!b.found){ctx.globalAlpha=Math.max(0,1-b.progress/100);ctx.fillStyle='#c99450';ctx.fillRect(-38,-27,76,54)}ctx.restore();
+      });
+      particles.forEach(p=>{if(p.dug>0&&p.dug<1){ctx.globalAlpha=.7*(1-p.dug);ctx.fillStyle='#e8c280';ctx.beginPath();ctx.arc(p.x,p.y,p.r*(1+p.dug*2),0,7);ctx.fill()}});ctx.globalAlpha=1;
+      if(hint){ctx.save();ctx.strokeStyle='#fff33a';ctx.lineWidth=5;ctx.setLineDash([8,8]);ctx.beginPath();ctx.arc(hint.x,hint.y,42+Math.sin(Date.now()/140)*4,0,7);ctx.stroke();ctx.restore();requestAnimationFrame(()=>{if(hint)draw()})}
+    }
+    function point(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
+    function dig(x,y){
+      unlockAudio(); const radius=tool==='hammer'?54:31, power=tool==='hammer'?17:8;
+      particles.forEach(p=>{const d=Math.hypot(p.x-x,p.y-y);if(d<radius)p.dug=Math.min(1,p.dug+(1-d/radius)*.55)});
+      let discovered=false;
+      bones.forEach(b=>{if(b.found)return;const d=Math.hypot(b.x-x,b.y-y);if(d<radius+20){b.progress=Math.min(100,b.progress+power*(1-d/(radius+25)));if(b.progress>=100){b.found=true;b.progress=100;discovered=true;found()}}});
+      if(!discovered)tone(tool==='hammer'?95:240,.035,.025); draw();
+    }
+    function found(){
+      const n=bones.filter(b=>b.found).length;countEl.textContent=n;say('🦴 ほねを みつけた！');chime();
+      if(n===8)setTimeout(win,650);
+    }
+    function win(){complete.classList.add('open');victory();document.querySelector('#again').focus()}
+    function say(text){clearTimeout(msgTimer);message.textContent=text;message.classList.add('show');msgTimer=setTimeout(()=>message.classList.remove('show'),1300)}
+    function unlockAudio(){if(!audio){audio=new (window.AudioContext||window.webkitAudioContext)()}if(audio.state==='suspended')audio.resume()}
+    function tone(freq,duration,volume=.06,delay=0){if(!audio)return;const t=audio.currentTime+delay,o=audio.createOscillator(),g=audio.createGain();o.frequency.value=freq;o.type='sine';g.gain.setValueAtTime(volume,t);g.gain.exponentialRampToValueAtTime(.001,t+duration);o.connect(g).connect(audio.destination);o.start(t);o.stop(t+duration)}
+    function chime(){[523,659,784].forEach((f,i)=>tone(f,.28,.08,i*.09))}
+    function victory(){[523,659,784,1047].forEach((f,i)=>tone(f,.45,.1,i*.14))}
+    function choose(next){tool=next;brushBtn.classList.toggle('selected',next==='brush');hammerBtn.classList.toggle('selected',next==='hammer');brushBtn.setAttribute('aria-pressed',next==='brush');hammerBtn.setAttribute('aria-pressed',next==='hammer');say(next==='brush'?'ブラシで やさしく！':'ハンマーで おおきく！')}
+    canvas.addEventListener('pointerdown',e=>{dragging=true;canvas.setPointerCapture(e.pointerId);const p=point(e);dig(p.x,p.y)});
+    canvas.addEventListener('pointermove',e=>{if(dragging){const p=point(e);dig(p.x,p.y)}});
+    canvas.addEventListener('pointerup',()=>dragging=false);canvas.addEventListener('pointercancel',()=>dragging=false);
+    brushBtn.addEventListener('click',()=>choose('brush'));hammerBtn.addEventListener('click',()=>choose('hammer'));
+    document.querySelector('#hint').addEventListener('click',()=>{unlockAudio();const left=bones.filter(b=>!b.found);if(!left.length)return;hint=left[Math.floor(Math.random()*left.length)];say('ひかっている ところだよ！');tone(880,.25,.06);draw();setTimeout(()=>{hint=null;draw()},2400)});
+    document.querySelector('#again').addEventListener('click',reset);
+    addEventListener('resize',resize,{passive:true});
+    requestAnimationFrame(()=>{resize();reset()});
+  })();
+  </script>
+</body>
+</html>
