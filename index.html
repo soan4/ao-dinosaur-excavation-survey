@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#8b5732">
+  <title>あおの きょうりゅう はっくつたい</title>
+  <style>
+    :root{--ink:#573720;--paper:#fff5d5;--sand:#d59b50;--orange:#f09a3e;--green:#8fc15d}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;min-height:100%;overscroll-behavior:none}
+    body{font-family:"Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;color:var(--ink);background:linear-gradient(#bde4df 0 32%,#d6a863 32%);display:flex;justify-content:center;touch-action:manipulation}
+    button{font:inherit;color:inherit}
+    .app{width:min(100%,580px);min-height:100dvh;padding:max(9px,env(safe-area-inset-top)) 11px max(11px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    h1{font-size:clamp(18px,5.1vw,28px);line-height:1.15;margin:0;text-shadow:0 2px #fff9}
+    .counter{flex:none;background:var(--paper);border:3px solid var(--ink);border-radius:999px;padding:5px 10px;font-weight:900;box-shadow:0 3px #765035}
+    .mission{text-align:center;background:#fff8dcdd;border:2px solid #765035;border-radius:12px;padding:4px 8px;font-size:14px;font-weight:900}
+    .stage{position:relative;flex:1;min-height:410px;border:5px solid #765035;border-radius:22px;overflow:hidden;background:var(--sand);box-shadow:0 7px #4f321f,0 12px 18px #51331f55;touch-action:none}
+    canvas{display:block;width:100%;height:100%;cursor:crosshair}
+    .message{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:max-content;max-width:94%;padding:7px 13px;border-radius:999px;background:#fff9e9ed;border:2px solid #68432b;font-weight:900;text-align:center;pointer-events:none;opacity:0;transition:.2s;z-index:2}
+    .message.show{opacity:1;transform:translate(-50%,2px)}
+    .legend{position:absolute;bottom:7px;left:7px;background:#fff9e5d8;border:2px solid #765035;border-radius:10px;padding:4px 7px;font-size:11px;font-weight:900;pointer-events:none}
+    .toolbar{display:grid;grid-template-columns:1fr 1fr .78fr;gap:7px}
+    .tool{min-height:62px;border:3px solid var(--ink);border-radius:17px;background:#fff2c8;box-shadow:0 4px #765035;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;gap:4px;padding:5px}
+    .tool span{font-size:27px}.tool:active{transform:translateY(3px);box-shadow:0 1px #765035}.tool.selected{background:#ffb548;outline:3px solid white}.tool.hint{background:#bce386}
+    .tip{text-align:center;font-weight:900;font-size:12px;margin:0}
+    .overlay{position:fixed;inset:0;background:#17392fdf;display:none;align-items:center;justify-content:center;padding:14px;z-index:10}.overlay.open{display:flex;animation:fade .3s}
+    .card{width:min(100%,530px);max-height:94dvh;overflow:auto;background:var(--paper);border:5px solid var(--ink);border-radius:25px;padding:15px;text-align:center;box-shadow:0 13px 32px #0008}
+    .card h2{font-size:clamp(27px,8vw,40px);margin:0;color:#a54725}.card h3{font-size:clamp(21px,6vw,30px);margin:2px}.card p{font-weight:900;margin:3px 0 6px}
+    .museum{background:linear-gradient(#eef0db,#d8ceb0);border:3px solid #775a3c;border-radius:14px;padding:5px;margin:6px 0 10px}
+    .skeleton{display:none;width:100%;height:auto;max-height:43dvh}.skeleton.active{display:block}
+    .bone{fill:#efe0b6;stroke:#654c35;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}.thin{fill:none;stroke:#654c35;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}.rib{fill:none;stroke:#80664c;stroke-width:3.5;stroke-linecap:round}
+    .again{border:3px solid var(--ink);background:var(--orange);border-radius:16px;padding:10px 21px;font-weight:900;font-size:18px;box-shadow:0 4px #765035}
+    @keyframes fade{from{opacity:0}to{opacity:1}}
+    @media(max-height:680px){.stage{min-height:300px}.tool{min-height:52px}.tip{display:none}.mission{font-size:12px}}
+    @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header><h1>🦖 あおの きょうりゅう はっくつたい</h1><div class="counter" aria-live="polite">🦴 <b id="count">0</b> / 8</div></header>
+    <div class="mission">こんかいの きょうりゅう：<b id="targetName">？？？</b></div>
+    <section class="stage" id="stage" aria-label="砂と岩を掘る発掘エリア">
+      <canvas id="dig"></canvas><div class="message" id="message" aria-live="polite"></div>
+      <div class="legend">🪨 岩＝ハンマー　✨ 骨の仕上げ＝ブラシ</div>
+    </section>
+    <div class="toolbar">
+      <button class="tool selected" id="brush" type="button" aria-pressed="true"><span>🖌️</span>ブラシ</button>
+      <button class="tool" id="hammer" type="button" aria-pressed="false"><span>🔨</span>ハンマー</button>
+      <button class="tool hint" id="hint" type="button"><span>💡</span>ヒント</button>
+    </div>
+    <p class="tip">岩をハンマーでこわして、さいごはブラシで骨をきれいにしよう！</p>
+  </main>
+
+  <div class="overlay" id="complete" role="dialog" aria-modal="true" aria-labelledby="completeTitle"><div class="card">
+    <h2 id="completeTitle">🎉 はっくつ せいこう！</h2><h3 id="resultName"></h3><p>8この ほねが そろったよ！</p>
+    <div class="museum">
+      <svg id="trex" class="skeleton" viewBox="0 0 560 300" role="img" aria-label="ティラノサウルスの骨格">
+        <g><path class="thin" d="M435 83C356 89 298 120 225 153S91 177 24 169"/><path class="rib" d="M352 109q-5 67-47 80M331 116q-8 64-48 77M308 126q-8 55-43 69M286 137q-8 45-35 61"/><path class="bone" d="M430 50q50-24 101 8l15 27-27 20-73 2-29-20z"/><circle cx="500" cy="66" r="6" fill="#654c35"/><path class="thin" d="M446 88l84 1M467 89l8 16M487 89l8 16M509 89l6 13M427 91l-28 38M398 129l-18 20"/><path class="bone" d="M290 130q45-33 95-8 17 29-7 54-50 26-94-5z"/><path class="thin" d="M304 179l-30 69 7 34M350 179l38 64-3 40M275 247l-25 31M388 243l26 32M281 282h-42M385 283h45M366 143l29 30 38 3M356 153l20 38 34 9"/></g>
+      </svg>
+      <svg id="triceratops" class="skeleton" viewBox="0 0 560 300" role="img" aria-label="トリケラトプスの骨格">
+        <g><path class="thin" d="M432 105C340 107 277 127 208 151S82 169 24 151"/><path class="bone" d="M407 64q44-35 99-12 32 20 34 59l-28 27-76-9-38-34z"/><path class="thin" d="M499 84l40-35M477 77l7-42M513 111l34 11M445 125l-27 24"/><circle cx="506" cy="97" r="6" fill="#654c35"/><path class="bone" d="M269 119q66-33 125 13 16 44-23 65-62 20-114-20z"/><path class="rib" d="M358 122q6 67-38 87M334 120q2 69-40 90M309 126q-3 61-39 79M285 136q-4 47-31 64"/><path class="thin" d="M289 192l-33 57-1 36M350 196l34 51 2 38M255 249l-24 33M384 247l24 34M255 285h-40M386 285h40M403 146l35 32"/></g>
+      </svg>
+      <svg id="stegosaurus" class="skeleton" viewBox="0 0 560 300" role="img" aria-label="ステゴサウルスの骨格">
+        <g><path class="thin" d="M465 137C393 105 318 111 238 141S89 164 29 140M31 140L7 119M32 140L4 153"/><path class="bone" d="M451 118q47-13 86 12l8 25-38 17-55-14-19-20z"/><circle cx="516" cy="139" r="5" fill="#654c35"/><path class="bone" d="M235 121q89-49 186 4 19 42-21 73-94 28-177-17z"/><path class="rib" d="M385 123q4 63-38 82M357 116q1 69-43 96M327 116q-3 72-48 96M297 123q-4 60-41 83M270 133q-5 49-34 69"/><path class="bone" d="M248 120l-8-40 35 29M280 103l5-51 31 53M326 102l19-51 25 61M374 108l29-41 9 59M418 121l29-26-4 42"/><path class="thin" d="M265 195l-29 54 3 36M372 196l30 52-2 37M236 249l-24 33M402 248l26 34M239 285h-39M400 285h43"/></g>
+      </svg>
+    </div><button class="again" id="again" type="button">つぎを はっくつする</button>
+  </div></div>
+
+  <script>
+  (()=>{
+    'use strict';
+    const canvas=document.querySelector('#dig'),ctx=canvas.getContext('2d'),stage=document.querySelector('#stage');
+    const countEl=document.querySelector('#count'),message=document.querySelector('#message'),complete=document.querySelector('#complete');
+    const brushBtn=document.querySelector('#brush'),hammerBtn=document.querySelector('#hammer');
+    const dinos=[{id:'trex',name:'ティラノサウルス'},{id:'triceratops',name:'トリケラトプス'},{id:'stegosaurus',name:'ステゴサウルス'}];
+    let W=0,H=0,dpr=1,tool='brush',dragging=false,bones=[],grains=[],dino,highlight=null,audio=null,msgTimer=0,hintTimer=0,drawQueued=false;
+    const boneShapes=[
+      p=>{p.ellipse(0,0,24,16,0,0,7);p.moveTo(16,-10);p.lineTo(34,-15);p.lineTo(29,1);p.lineTo(17,9)},
+      p=>{p.moveTo(-28,0);p.lineTo(28,0);[-21,-7,7,21].forEach(x=>{p.moveTo(x,-10);p.lineTo(x,10)})},
+      p=>{p.moveTo(-27,-15);p.quadraticCurveTo(0,24,27,-15);p.moveTo(-14,-1);p.lineTo(14,-1)},
+      p=>{p.moveTo(-30,0);p.lineTo(30,0);p.moveTo(-27,-8);p.lineTo(-27,8);p.moveTo(27,-8);p.lineTo(27,8)},
+      p=>{p.ellipse(-13,0,15,19,0,0,7);p.ellipse(13,0,15,19,0,0,7)},
+      p=>{p.moveTo(-24,-16);p.lineTo(0,0);p.lineTo(-22,19);p.moveTo(0,0);p.lineTo(27,14)},
+      p=>{p.moveTo(-28,-10);p.quadraticCurveTo(0,13,29,5);p.moveTo(-7,3);p.lineTo(-14,18)},
+      p=>{p.moveTo(-29,9);p.quadraticCurveTo(0,-20,29,5);p.moveTo(19,0);p.lineTo(33,-10)}
+    ];
+    function resize(){const r=stage.getBoundingClientRect();dpr=Math.min(devicePixelRatio||1,2);W=r.width;H=r.height;canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);draw()}
+    function reset(){
+      dino=dinos[Math.floor(Math.random()*dinos.length)];document.querySelector('#targetName').textContent=dino.name;document.querySelector('#resultName').textContent=dino.name;
+      document.querySelectorAll('.skeleton').forEach(x=>x.classList.toggle('active',x.id===dino.id));
+      bones=[];grains=[];highlight=null;countEl.textContent=0;complete.classList.remove('open');
+      const mx=55,my=48,cw=(W-mx*2)/2,ch=(H-my*2)/4;
+      for(let i=0;i<8;i++){const rock=i%2===0;bones.push({x:mx+cw*(i%2+.22+Math.random()*.56),y:my+ch*(Math.floor(i/2)+.22+Math.random()*.56),angle:(Math.random()-.5)*1.3,shape:i,rock,rockHP:rock?100:0,clean:0,found:false})}
+      for(let i=0;i<180;i++)grains.push({x:Math.random()*W,y:Math.random()*H,r:1+Math.random()*4,a:.1+Math.random()*.3,dug:0});
+      draw();say('「'+dino.name+'」を さがそう！')
+    }
+    function pathFor(b){const p=new Path2D();boneShapes[b.shape](p);return p}
+    function rockPath(b){const p=new Path2D();const r=38;p.moveTo(b.x-r,b.y+10);p.lineTo(b.x-r*.7,b.y-r*.65);p.lineTo(b.x-r*.1,b.y-r);p.lineTo(b.x+r*.72,b.y-r*.55);p.lineTo(b.x+r,b.y+r*.25);p.lineTo(b.x+r*.45,b.y+r*.8);p.lineTo(b.x-r*.5,b.y+r*.75);p.closePath();return p}
+    function draw(){
+      drawQueued=false;if(!W||!H)return;const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#e6bc76');bg.addColorStop(1,'#c78a45');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+      grains.forEach(g=>{if(g.dug<1){ctx.globalAlpha=g.a*(1-g.dug);ctx.fillStyle='#75492b';ctx.beginPath();ctx.arc(g.x,g.y,g.r,0,7);ctx.fill()}});ctx.globalAlpha=1;
+      bones.forEach(b=>{
+        if(b.rock&&b.rockHP>0){const p=rockPath(b);ctx.fillStyle=b.rockHP>55?'#77756c':'#8c8678';ctx.strokeStyle='#4e4a43';ctx.lineWidth=4;ctx.fill(p);ctx.stroke(p);if(b.rockHP<75){ctx.strokeStyle='#d4c6a4';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(b.x-18,b.y-20);ctx.lineTo(b.x,b.y-3);ctx.lineTo(b.x-13,b.y+15);ctx.moveTo(b.x,b.y-3);ctx.lineTo(b.x+19,b.y+11);ctx.stroke()}return}
+        if(b.clean>0){ctx.save();ctx.translate(b.x,b.y);ctx.rotate(b.angle);ctx.globalAlpha=.25+b.clean/135;ctx.fillStyle='#f4e4b5';ctx.strokeStyle='#695139';ctx.lineWidth=4;const p=pathFor(b);ctx.fill(p);ctx.stroke(p);if(!b.found){ctx.globalAlpha=Math.max(0,.95-b.clean/100);ctx.fillStyle='#b77b3e';ctx.fillRect(-39,-28,78,56)}ctx.restore()}
+      });
+      if(highlight){ctx.save();ctx.strokeStyle='#fff329';ctx.lineWidth=5;ctx.setLineDash([8,7]);ctx.beginPath();ctx.arc(highlight.x,highlight.y,43+Math.sin(Date.now()/130)*4,0,7);ctx.stroke();ctx.restore();queueDraw()}
+    }
+    function queueDraw(){if(!drawQueued){drawQueued=true;requestAnimationFrame(draw)}}
+    function point(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
+    function dig(x,y){
+      unlockAudio();const radius=tool==='hammer'?51:33;grains.forEach(g=>{const d=Math.hypot(g.x-x,g.y-y);if(d<radius)g.dug=Math.min(1,g.dug+(1-d/radius)*(tool==='brush'?.5:.25))});
+      let touched=false,wrong='';
+      bones.forEach(b=>{if(b.found)return;const dist=Math.hypot(b.x-x,b.y-y);if(dist>radius+23)return;touched=true;
+        if(b.rockHP>0){if(tool==='hammer'){b.rockHP=Math.max(0,b.rockHP-22);tone(90,.07,.045);if(b.rockHP===0){say('🪨 岩が こわれた！ ブラシの でばん！');crack()}}else wrong='この岩は ハンマーで こわそう！';return}
+        if(tool==='hammer'){wrong='骨のまわりは ブラシで やさしく！';return}
+        b.clean=Math.min(100,b.clean+10*(1-dist/(radius+28)));if(b.clean>=100){b.clean=100;b.found=true;found()}
+      });
+      if(wrong)say(wrong);if(!touched)tone(tool==='hammer'?105:245,.035,.02);draw()
+    }
+    function found(){const n=bones.filter(b=>b.found).length;countEl.textContent=n;say('🦴 ほねを みつけた！');chime();if(n===8)setTimeout(win,650)}
+    function win(){complete.classList.add('open');victory();document.querySelector('#again').focus()}
+    function choose(next){tool=next;brushBtn.classList.toggle('selected',next==='brush');hammerBtn.classList.toggle('selected',next==='hammer');brushBtn.setAttribute('aria-pressed',next==='brush');hammerBtn.setAttribute('aria-pressed',next==='hammer');say(next==='brush'?'ブラシで 骨をきれいに！':'ハンマーで 岩をこわそう！')}
+    function say(t){clearTimeout(msgTimer);message.textContent=t;message.classList.add('show');msgTimer=setTimeout(()=>message.classList.remove('show'),1450)}
+    function unlockAudio(){if(!audio)audio=new(window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume()}
+    function tone(f,d,v=.06,delay=0,type='sine'){if(!audio)return;const t=audio.currentTime+delay,o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g).connect(audio.destination);o.start(t);o.stop(t+d)}
+    function crack(){tone(75,.12,.08,0,'square');tone(55,.16,.07,.08,'square')}function chime(){[523,659,784].forEach((f,i)=>tone(f,.3,.08,i*.09))}function victory(){[523,659,784,1047].forEach((f,i)=>tone(f,.5,.1,i*.14))}
+    canvas.addEventListener('pointerdown',e=>{dragging=true;canvas.setPointerCapture(e.pointerId);const p=point(e);dig(p.x,p.y)});canvas.addEventListener('pointermove',e=>{if(dragging){const p=point(e);dig(p.x,p.y)}});canvas.addEventListener('pointerup',()=>dragging=false);canvas.addEventListener('pointercancel',()=>dragging=false);
+    brushBtn.addEventListener('click',()=>choose('brush'));hammerBtn.addEventListener('click',()=>choose('hammer'));
+    document.querySelector('#hint').addEventListener('click',()=>{unlockAudio();const left=bones.filter(b=>!b.found);if(!left.length)return;highlight=left[Math.floor(Math.random()*left.length)];say(highlight.rockHP>0?'ひかる岩を ハンマーで！':'ひかる場所を ブラシで！');tone(880,.25,.06);clearTimeout(hintTimer);hintTimer=setTimeout(()=>{highlight=null;draw()},2400);draw()});
+    document.querySelector('#again').addEventListener('click',reset);addEventListener('resize',resize,{passive:true});requestAnimationFrame(()=>{resize();reset()});
+  })();
+  </script>
+</body>
+</html>
