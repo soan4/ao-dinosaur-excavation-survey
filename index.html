@@ -3,21 +3,55 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>あおの きょうりゅう はっくつたい gameplay v2.2</title>
+<title>あおの きょうりゅう はっくつたい gameplay v2.3</title>
 <style>html,body{margin:0;min-height:100%;background:#bde4df;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif}.loading{min-height:100dvh;display:grid;place-items:center;text-align:center;padding:24px;color:#573720}.error{color:#9b3326}</style>
 </head>
 <body>
-<div class="loading" id="loading"><div><b>🦖 gameplay v2.2 を準備しています</b><p>ブラシを少し丁寧に使う調整をしています…</p></div></div>
+<div class="loading" id="loading"><div><b>🦖 gameplay v2.3 を準備しています</b><p>みがき進捗を追加しています…</p></div></div>
 <script>
 (async()=>{
 try{
- const url='https://raw.githubusercontent.com/soan4/ao-dinosaur-excavation-survey/c51c53d0ba0f4cda5b4f8fbcb4aa4dc8f1602a1d/index.html';
- const res=await fetch(url,{cache:'no-store'});if(!res.ok)throw new Error('ゲーム本体を読み込めませんでした');
- let html=await res.text();
- html=html.replace('const cols=8,rows=6,cw2=10,ch2=10,brushR=22;','const cols=8,rows=6,cw2=10,ch2=10,brushR=13;');
- html=html.replace('gameplay v2.1','gameplay v2.2');
- if(!html.includes('brushR=13'))throw new Error('ブラシ速度の調整に失敗しました');
- document.open();document.write(html);document.close();
+  const url='https://raw.githubusercontent.com/soan4/ao-dinosaur-excavation-survey/c51c53d0ba0f4cda5b4f8fbcb4aa4dc8f1602a1d/index.html';
+  const res=await fetch(url,{cache:'no-store'});if(!res.ok)throw new Error('ゲーム本体を読み込めませんでした');
+  let page=await res.text();
+
+  page=page.replace('const cols=8,rows=6,cw2=10,ch2=10,brushR=22;','const cols=8,rows=6,cw2=10,ch2=10,brushR=8;');
+  page=page.replace('gameplay v2.1','gameplay v2.3');
+
+  const marker="if(!html.includes('cleanGrid:Array(48)')||!html.includes('骨の上を なぞって'))throw new Error('ブラシ処理の組み込みに失敗しました');";
+  const enhancement=`
+  const polishCss=\`
+  .polish-panel{position:absolute;right:8px;top:54px;width:128px;padding:8px;background:#fff4d8ee;border:3px solid #68432b;border-radius:14px;box-shadow:0 4px #68432b55;z-index:3;display:none;pointer-events:none}
+  .polish-panel.show{display:block}
+  .polish-panel h4{margin:0 0 5px;text-align:center;font-size:14px}
+  .polish-stage{font-size:11px;font-weight:900;line-height:1.3;margin-bottom:5px}
+  .polish-bar{height:13px;border:2px solid #573720;border-radius:999px;background:#3e3e38;overflow:hidden}
+  .polish-fill{height:100%;width:0%;background:linear-gradient(90deg,#85cf39,#d2ee54);transition:width .08s linear}
+  .polish-percent{text-align:right;font-size:20px;font-weight:900;line-height:1;margin-top:3px}
+  .almost{display:none;margin-top:5px;text-align:center;font-size:12px;font-weight:900;color:#a64a21}.almost.show{display:block}
+  @media(max-width:390px){.polish-panel{width:112px;top:50px;padding:6px}.polish-percent{font-size:18px}}
+  \`;
+  html=html.replace('</style>',polishCss+'</style>');
+  html=html.replace('<div class="legend">🪨 岩＝ハンマー　✨ 骨の仕上げ＝ブラシ</div>', '<div class="legend">🪨 岩＝ハンマー　✨ 骨の仕上げ＝ブラシ</div><div class="polish-panel" id="polishPanel"><h4>✨ みがきちゅう！</h4><div class="polish-stage" id="polishStage">① 泥をおとそう</div><div class="polish-bar"><div class="polish-fill" id="polishFill"></div></div><div class="polish-percent" id="polishPercent">0%</div><div class="almost" id="almost">✨ あと少し！</div></div>');
+  html=html.replace("function setPhase(next){", \`function updatePolishPanel(b){
+      const panel=document.querySelector('#polishPanel');if(!panel)return;
+      if(!b||b.found||b.rockHP>0){panel.classList.remove('show');return}
+      const pct=Math.max(0,Math.min(100,Math.round(b.clean||0)));
+      panel.classList.add('show');
+      document.querySelector('#polishFill').style.width=pct+'%';
+      document.querySelector('#polishPercent').textContent=pct+'%';
+      document.querySelector('#polishStage').textContent=pct<35?'① 泥のかたまりを おとそう':pct<75?'② うすい泥を おとそう':'③ さいごの よごれを おとそう';
+      document.querySelector('#almost').classList.toggle('show',pct>=80&&pct<100);
+    }
+    function setPhase(next){\`);
+  html=html.replace("b.clean=Math.min(100,cleared/36*100);", "b.clean=Math.min(100,cleared/36*100);updatePolishPanel(b);");
+  html=html.replace("bones=[];grains=[];highlight=null;countEl.textContent=0;complete.classList.remove('open');setPhase('dig');", "bones=[];grains=[];highlight=null;countEl.textContent=0;complete.classList.remove('open');setPhase('dig');const pp=document.querySelector('#polishPanel');if(pp)pp.classList.remove('show');");
+  html=html.replace("b.clean=100;b.found=true;found()", "b.clean=100;updatePolishPanel(b);b.found=true;found()", 1);
+  `+marker;
+
+  page=page.replace(marker,enhancement);
+  if(!page.includes('brushR=8')||!page.includes('みがきちゅう！'))throw new Error('v2.3 の組み込みに失敗しました');
+  document.open();document.write(page);document.close();
 }catch(e){document.querySelector('#loading').innerHTML='<div class="error"><b>読み込みに失敗しました</b><p>'+e.message+'</p></div>'}
 })();
 </script>
