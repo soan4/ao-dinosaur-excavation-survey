@@ -3,61 +3,58 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>あおの きょうりゅう はっくつたい visual v3.2</title>
-<style>html,body{margin:0;min-height:100%;background:#3f2b1c;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif}.loading{min-height:100dvh;display:grid;place-items:center;text-align:center;padding:24px;color:#fff1cf}.error{color:#ffd0c2}</style>
+<title>あおの きょうりゅう はっくつたい visual v3.3</title>
+<style>
+html,body{margin:0;min-height:100%;background:#3f2b1c;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif}
+.loading{min-height:100dvh;display:grid;place-items:center;text-align:center;padding:24px;color:#fff1cf}.error{color:#ffd0c2}
+</style>
 </head>
 <body>
-<div class="loading" id="loading"><div><b>🦖 visual v3.2 を準備しています</b><p>ブラシ・ハンマー・骨の演出を追加中…</p></div></div>
+<div class="loading" id="loading"><div><b>🦖 visual v3.3 を準備しています</b><p>ゲームを読み込んでいます…</p></div></div>
 <script>
 (async()=>{
 try{
-  const url='https://raw.githubusercontent.com/soan4/ao-dinosaur-excavation-survey/057b18f2cee050b8e99b7a8fe30737da538a3f64/index.html';
-  const res=await fetch(url,{cache:'no-store'});if(!res.ok)throw new Error('visual-v3.1 を読み込めませんでした');
+  const url='https://raw.githubusercontent.com/soan4/ao-dinosaur-excavation-survey/34f88617a7057c1fe75676fdd363806bb64d3850/index.html';
+  const res=await fetch(url,{cache:'no-store'});
+  if(!res.ok)throw new Error('gameplay-v2 を読み込めませんでした');
   let src=await res.text();
 
-  const injectNeedle='const replacement=`page=page.replace(\'</style>\',${JSON.stringify(visualCss)}+\'</style>\');${fieldPatch}${needle}`;';
-  const effectBlock=String.raw`
-  const effectPatch=String.raw\`
-    const fxCss=\\\`
-    .dig-fx{position:absolute;z-index:6;pointer-events:none;will-change:transform,opacity}
-    .sand-fx{width:5px;height:4px;border-radius:50%;background:#d5a15d;box-shadow:0 1px 0 #6d4328;animation:sandFly .48s ease-out forwards}
-    .rock-fx{width:8px;height:6px;border-radius:40% 55% 45% 50%;background:linear-gradient(135deg,#b3aa99,#625c52);box-shadow:0 2px 1px #2d2118aa;animation:rockFly .5s cubic-bezier(.15,.7,.3,1) forwards}
-    .bone-glow{position:absolute;z-index:5;width:78px;height:78px;margin:-39px 0 0 -39px;border-radius:50%;pointer-events:none;background:radial-gradient(circle,#fffbd9cc 0 10%,#ffe36a88 25%,#ffc92833 47%,transparent 70%);filter:drop-shadow(0 0 8px #fff5a8);animation:boneShine .72s ease-out forwards}
-    .bone-glow:before,.bone-glow:after{content:'✨';position:absolute;font-size:22px;filter:drop-shadow(0 1px #fff)}.bone-glow:before{left:2px;top:4px}.bone-glow:after{right:0;bottom:5px}
-    @keyframes sandFly{0%{opacity:.95;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.35)}}
-    @keyframes rockFly{0%{opacity:1;transform:translate(0,0) rotate(0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(.55)}}
-    @keyframes boneShine{0%{opacity:0;transform:scale(.3)}28%{opacity:1;transform:scale(1.28)}62%{opacity:.95;transform:scale(1)}100%{opacity:0;transform:scale(1.45)}}
-    @media(prefers-reduced-motion:reduce){.dig-fx,.bone-glow{animation-duration:.01ms!important}}
-    \\\`;
-    page=page.replace('</style>',fxCss+'</style>');
-    const fxNeedle=\"canvas.addEventListener('pointerdown'\";
-    const fxJs=\\\`let lastVisualFx=0;
-    function spawnToolFx(x,y,kind){
-      const now=performance.now();if(now-lastVisualFx<45)return;lastVisualFx=now;
-      const amount=kind==='hammer'?5:3;
-      for(let i=0;i<amount;i++){
-        const e=document.createElement('i');e.className='dig-fx '+(kind==='hammer'?'rock-fx':'sand-fx');
-        e.style.left=x+'px';e.style.top=y+'px';
-        const a=(-Math.PI*.85)+(Math.PI*.7)*(i/Math.max(1,amount-1))+(Math.random()-.5)*.25;
-        const dist=(kind==='hammer'?34:22)+Math.random()*(kind==='hammer'?28:18);
-        e.style.setProperty('--dx',Math.cos(a)*dist+'px');e.style.setProperty('--dy',Math.sin(a)*dist+'px');e.style.setProperty('--rot',((Math.random()-.5)*240)+'deg');
-        stage.appendChild(e);setTimeout(()=>e.remove(),600)
-      }
-    }
-    function shineBone(b){
-      if(!b)return;const g=document.createElement('div');g.className='bone-glow';g.style.left=(b.x/W*100)+'%';g.style.top=(b.y/H*100)+'%';stage.appendChild(g);setTimeout(()=>g.remove(),800)
-    }
-    \\\`;
-    page=page.replace(fxNeedle,fxJs+fxNeedle);
-    page=page.replace(\"function dig(x,y){\\n      unlockAudio();\",\"function dig(x,y){\\n      unlockAudio();spawnToolFx(x,y,tool==='hammer'?'hammer':'brush');\");
-    page=page.replace('b.clean=100;updatePolishPanel(b);b.found=true;celebrateDiscovery();found()','b.clean=100;updatePolishPanel(b);b.found=true;shineBone(b);celebrateDiscovery();found()');
-  \\\`;
+  const visualCss=`
+  :root{--v3-ink:#4a2b16;--v3-edge:#6b411f}
+  body{background:radial-gradient(circle at 50% 0,#6b4a2b 0,#3f2b1c 42%,#26180f 100%)!important}
+  .app{background:linear-gradient(180deg,#6e4929 0,#52341f 12%,#3a281b 100%)!important;box-shadow:0 0 38px #0007!important;padding-left:12px!important;padding-right:12px!important}
+  header,.mission,.polish-panel,.message,.legend{background:linear-gradient(#fff6d8,#e8c986)!important;border-color:var(--v3-edge)!important;color:var(--v3-ink)!important;box-shadow:inset 0 2px #fff9,inset 0 -4px #ad793d66,0 4px 0 #35200f88!important}
+  header{border:3px solid var(--v3-edge)!important;border-radius:16px!important}.mission,.polish-panel{border:3px solid var(--v3-edge)!important;border-radius:14px!important}
+  .counter{background:linear-gradient(#fff9d9,#eacb83)!important;border:3px solid var(--v3-edge)!important;color:var(--v3-ink)!important;box-shadow:inset 0 2px #fff,inset 0 -4px #b78545aa,0 4px 0 #3c230f99!important}
+  .stage{border:6px solid #65401f!important;border-radius:25px!important;background:#976132!important;box-shadow:inset 0 0 0 3px #b47a3b77,inset 0 10px 18px #fff1c31c,0 7px 0 #2b180c,0 13px 24px #0007!important}
+  .stage:after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 18% 19%,#dfb27344 0 2px,transparent 3px),radial-gradient(circle at 72% 42%,#51301c55 0 3px,transparent 4px),radial-gradient(circle at 44% 75%,#c78e4f38 0 2px,transparent 3px);background-size:31px 29px,47px 43px,37px 39px;mix-blend-mode:multiply}
+  .tool{position:relative;overflow:hidden;border:4px solid #503018!important;border-radius:18px!important;background:linear-gradient(#fff4ce,#d8bb78)!important;color:var(--v3-ink)!important;box-shadow:inset 0 3px #fff9,inset 0 -6px #9a682e66,0 5px 0 #321b0d,0 9px 14px #0005!important}
+  .tool.selected{background:linear-gradient(#53b8f5,#1879bd)!important;color:white!important;border-color:#173f62!important;outline:3px solid #dff6ff!important;box-shadow:inset 0 3px #9edaff,inset 0 -6px #0c4d8299,0 5px 0 #102d48,0 9px 15px #0006!important}
+  .tool.hint{background:linear-gradient(#a8df55,#5eaa2c)!important;border-color:#365f1e!important}
+  .card{background:linear-gradient(#fff5d8,#e6c989)!important;border:6px solid #5b351b!important;border-radius:28px!important;box-shadow:inset 0 3px #fff9,inset 0 -7px #a96f3377,0 12px 0 #2f190c99,0 22px 40px #000a!important}
+  .museum{background:linear-gradient(#4c3b2c,#2f281f)!important;border:4px solid #75502d!important;box-shadow:inset 0 0 18px #0009!important}
+  .dig-fx{position:absolute;z-index:6;pointer-events:none;will-change:transform,opacity}.sand-fx{width:5px;height:4px;border-radius:50%;background:#d5a15d;box-shadow:0 1px 0 #6d4328;animation:sandFly .48s ease-out forwards}.rock-fx{width:8px;height:6px;border-radius:45%;background:linear-gradient(135deg,#b3aa99,#625c52);box-shadow:0 2px 1px #2d2118aa;animation:rockFly .5s ease-out forwards}.bone-glow{position:absolute;z-index:5;width:78px;height:78px;margin:-39px 0 0 -39px;border-radius:50%;pointer-events:none;background:radial-gradient(circle,#fffbd9cc 0 10%,#ffe36a88 25%,#ffc92833 47%,transparent 70%);filter:drop-shadow(0 0 8px #fff5a8);animation:boneShine .72s ease-out forwards}.bone-glow:before,.bone-glow:after{content:'✨';position:absolute;font-size:22px}.bone-glow:before{left:2px;top:4px}.bone-glow:after{right:0;bottom:5px}@keyframes sandFly{to{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.35)}}@keyframes rockFly{to{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(.55)}}@keyframes boneShine{0%{opacity:0;transform:scale(.3)}30%{opacity:1;transform:scale(1.25)}100%{opacity:0;transform:scale(1.45)}}
   `;
 
-  if(!src.includes(injectNeedle))throw new Error('第3段階の差し込み位置が見つかりません');
-  src=src.replace(injectNeedle,effectBlock+"\n  const replacement=`page=page.replace('</style>',${JSON.stringify(visualCss)}+'</style>');${fieldPatch}${effectPatch}${needle}`;");
+  const needle='document.open();document.write(page);document.close();';
+  if(!src.includes(needle))throw new Error('ゲームへの差し込み位置が見つかりません');
+
+  const patch=`
+    page=page.replace('</style>',${JSON.stringify(visualCss)}+'</style>');
+    const fxNeedle="canvas.addEventListener('pointerdown'";
+    if(page.includes(fxNeedle)){
+      const fxJs=\`let lastVisualFx=0;function spawnToolFx(x,y,kind){const now=performance.now();if(now-lastVisualFx<55)return;lastVisualFx=now;const amount=kind==='hammer'?5:3;for(let i=0;i<amount;i++){const e=document.createElement('i');e.className='dig-fx '+(kind==='hammer'?'rock-fx':'sand-fx');e.style.left=x+'px';e.style.top=y+'px';const a=-2.55+1.8*(i/Math.max(1,amount-1))+(Math.random()-.5)*.2;const dist=(kind==='hammer'?34:20)+Math.random()*(kind==='hammer'?25:16);e.style.setProperty('--dx',Math.cos(a)*dist+'px');e.style.setProperty('--dy',Math.sin(a)*dist+'px');e.style.setProperty('--rot',((Math.random()-.5)*220)+'deg');stage.appendChild(e);setTimeout(()=>e.remove(),600)}}function shineBone(b){if(!b)return;const g=document.createElement('div');g.className='bone-glow';g.style.left=(b.x/W*100)+'%';g.style.top=(b.y/H*100)+'%';stage.appendChild(g);setTimeout(()=>g.remove(),800)}\`;
+      page=page.replace(fxNeedle,fxJs+fxNeedle);
+      page=page.replace("function dig(x,y){\\n      unlockAudio();","function dig(x,y){\\n      unlockAudio();spawnToolFx(x,y,tool==='hammer'?'hammer':'brush');");
+      page=page.replace('b.clean=100;updatePolishPanel(b);b.found=true;celebrateDiscovery();found()','b.clean=100;updatePolishPanel(b);b.found=true;shineBone(b);celebrateDiscovery();found()');
+    }
+    ${needle}`;
+
+  src=src.replace(needle,patch);
   document.open();document.write(src);document.close();
-}catch(e){document.querySelector('#loading').innerHTML='<div class="error"><b>読み込みに失敗しました</b><p>'+e.message+'</p></div>'}
+}catch(e){
+  document.querySelector('#loading').innerHTML='<div class="error"><b>読み込みに失敗しました</b><p>'+e.message+'</p></div>';
+}
 })();
 </script>
 </body>
