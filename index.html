@@ -3,159 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#8b5732">
-<title>あおの きょうりゅう はっくつたい gameplay v2.1</title>
-<style>
-html,body{margin:0;min-height:100%;background:#bde4df;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif}
-.loading{min-height:100dvh;display:grid;place-items:center;text-align:center;padding:24px;color:#573720}
-.loading b{font-size:22px}.loading p{font-weight:700}.error{color:#9b3326}
-</style>
+<title>あおの きょうりゅう はっくつたい gameplay v2.2</title>
+<style>html,body{margin:0;min-height:100%;background:#bde4df;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif}.loading{min-height:100dvh;display:grid;place-items:center;text-align:center;padding:24px;color:#573720}.error{color:#9b3326}</style>
 </head>
 <body>
-<div class="loading" id="loading"><div><b>🦖 gameplay v2.1 を準備しています</b><p>ブラシでなぞった場所だけ、泥が落ちるようにしています…</p></div></div>
+<div class="loading" id="loading"><div><b>🦖 gameplay v2.2 を準備しています</b><p>ブラシを少し丁寧に使う調整をしています…</p></div></div>
 <script>
 (async()=>{
 try{
-  const url='https://raw.githubusercontent.com/soan4/ao-dinosaur-excavation-survey/c14618e764d733e1c51bbe575165898c0029e4e2/index.html';
-  const res=await fetch(url,{cache:'no-store'});
-  if(!res.ok)throw new Error('ゲーム本体を読み込めませんでした');
-  let html=await res.text();
-
-  const gameplayCss=`
-  .phase-guide{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:-2px}
-  .phase-step{border:2px solid #765035;border-radius:12px;background:#fff8dcaa;padding:5px 3px;text-align:center;font-weight:900;font-size:12px;opacity:.58;transition:.15s}
-  .phase-step strong{display:block;font-size:20px;line-height:1.05}
-  .phase-step.active{opacity:1;background:#fff2a8;outline:3px solid #fff;transform:translateY(-1px)}
-  .phase-step.done{opacity:.8;background:#dff0b3}
-  .stage.hit{animation:stageHit .13s ease-out}
-  @keyframes stageHit{0%{transform:translateX(0)}30%{transform:translateX(-3px)}65%{transform:translateX(3px)}100%{transform:translateX(0)}}
-  `;
-  html=html.replace('</style>',gameplayCss+'</style>');
-
-  const missionOld='<div class="mission">こんかいの きょうりゅう：<b id="targetName">？？？</b></div>';
-  const missionNew=missionOld+`<div class="phase-guide" id="phaseGuide" aria-label="発掘の進み方">
-    <div class="phase-step active" data-phase="dig"><strong>🖌️</strong>① ほる</div>
-    <div class="phase-step" data-phase="break"><strong>🔨</strong>② わる</div>
-    <div class="phase-step" data-phase="polish"><strong>✨</strong>③ みがく</div>
-  </div>`;
-  html=html.replace(missionOld,missionNew);
-
-  html=html.replace(
-    "let W=0,H=0,dpr=1,tool='brush',dragging=false,bones=[],grains=[],dino,highlight=null,audio=null,msgTimer=0,hintTimer=0,drawQueued=false;",
-    "let W=0,H=0,dpr=1,tool='brush',dragging=false,bones=[],grains=[],dino,highlight=null,audio=null,msgTimer=0,hintTimer=0,drawQueued=false,phase='dig';"
-  );
-
-  html=html.replace("function reset(){",`function setPhase(next){
-      phase=next;
-      document.querySelectorAll('.phase-step').forEach(el=>{
-        el.classList.toggle('active',el.dataset.phase===next);
-        el.classList.toggle('done',(next==='break'&&el.dataset.phase==='dig')||(next==='polish'&&el.dataset.phase!=='polish'));
-      });
-    }
-    function impact(){
-      stage.classList.remove('hit');void stage.offsetWidth;stage.classList.add('hit');
-      if(navigator.vibrate)navigator.vibrate(18);
-    }
-    function reset(){`);
-
-  html=html.replace(
-    "bones=[];grains=[];highlight=null;countEl.textContent=0;complete.classList.remove('open');",
-    "bones=[];grains=[];highlight=null;countEl.textContent=0;complete.classList.remove('open');setPhase('dig');"
-  );
-
-  html=html.replace(
-    "bones.push({x:mx+cw*(i%2+.22+Math.random()*.56),y:my+ch*(Math.floor(i/2)+.22+Math.random()*.56),angle:(Math.random()-.5)*1.3,shape:i,rock,rockHP:rock?100:0,clean:0,found:false})",
-    "bones.push({x:mx+cw*(i%2+.22+Math.random()*.56),y:my+ch*(Math.floor(i/2)+.22+Math.random()*.56),angle:(Math.random()-.5)*1.3,shape:i,rock,rockHP:rock?100:0,clean:0,cleanGrid:Array(48).fill(false),found:false})"
-  );
-
-  const rockOld="if(b.rock&&b.rockHP>0){const p=rockPath(b);ctx.fillStyle=b.rockHP>55?'#77756c':'#8c8678';ctx.strokeStyle='#4e4a43';ctx.lineWidth=4;ctx.fill(p);ctx.stroke(p);if(b.rockHP<75){ctx.strokeStyle='#d4c6a4';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(b.x-18,b.y-20);ctx.lineTo(b.x,b.y-3);ctx.lineTo(b.x-13,b.y+15);ctx.moveTo(b.x,b.y-3);ctx.lineTo(b.x+19,b.y+11);ctx.stroke()}return}";
-  const rockNew=`if(b.rock&&b.rockHP>0){const p=rockPath(b);
-          const rockStage=b.rockHP>70?0:b.rockHP>35?1:2;
-          ctx.fillStyle=rockStage===0?'#77756c':rockStage===1?'#878277':'#989080';
-          ctx.strokeStyle='#4e4a43';ctx.lineWidth=4;ctx.fill(p);ctx.stroke(p);
-          if(rockStage>=1){ctx.strokeStyle='#e1d0ad';ctx.lineWidth=2.4;ctx.beginPath();
-            ctx.moveTo(b.x-20,b.y-22);ctx.lineTo(b.x-4,b.y-5);ctx.lineTo(b.x-15,b.y+17);
-            ctx.moveTo(b.x-4,b.y-5);ctx.lineTo(b.x+20,b.y+12);ctx.stroke()}
-          if(rockStage>=2){ctx.strokeStyle='#f2dfba';ctx.lineWidth=2.2;ctx.beginPath();
-            ctx.moveTo(b.x+17,b.y-22);ctx.lineTo(b.x+5,b.y-7);ctx.lineTo(b.x+16,b.y+20);
-            ctx.moveTo(b.x-4,b.y-5);ctx.lineTo(b.x+4,b.y-25);ctx.stroke()}
-          return}`;
-  html=html.replace(rockOld,rockNew);
-
-  const boneOld="if(b.clean>0){ctx.save();ctx.translate(b.x,b.y);ctx.rotate(b.angle);ctx.globalAlpha=.25+b.clean/135;ctx.fillStyle='#f4e4b5';ctx.strokeStyle='#695139';ctx.lineWidth=4;const p=pathFor(b);ctx.fill(p);ctx.stroke(p);if(!b.found){ctx.globalAlpha=Math.max(0,.95-b.clean/100);ctx.fillStyle='#b77b3e';ctx.fillRect(-39,-28,78,56)}ctx.restore()}";
-  const boneNew=`if(b.clean>0){
-          ctx.save();ctx.translate(b.x,b.y);ctx.rotate(b.angle);
-          ctx.globalAlpha=.35+b.clean/155;ctx.fillStyle='#f4e4b5';ctx.strokeStyle='#695139';ctx.lineWidth=4;
-          const p=pathFor(b);ctx.fill(p);ctx.stroke(p);
-          if(!b.found){
-            ctx.save();ctx.clip(p);ctx.globalAlpha=.92;
-            const cols=8,rows=6,cw2=10,ch2=10;
-            for(let gy=0;gy<rows;gy++)for(let gx=0;gx<cols;gx++){
-              const idx=gy*cols+gx;if(b.cleanGrid[idx])continue;
-              const px=-40+gx*cw2,py=-30+gy*ch2;
-              ctx.fillStyle=((gx+gy)%3===0)?'#a96d36':'#b77b3e';
-              ctx.fillRect(px,py,cw2+1,ch2+1);
-            }
-            ctx.restore();
-          }
-          ctx.restore()
-        }`;
-  html=html.replace(boneOld,boneNew);
-
-  const hitOld="if(b.rockHP>0){if(tool==='hammer'){b.rockHP=Math.max(0,b.rockHP-22);tone(90,.07,.045);if(b.rockHP===0){say('🪨 岩が こわれた！ ブラシの でばん！');crack()}}else wrong='この岩は ハンマーで こわそう！';return}";
-  const hitNew=`if(b.rockHP>0){if(tool==='hammer'){
-          const before=b.rockHP;b.rockHP=Math.max(0,b.rockHP-22);setPhase('break');impact();tone(90,.07,.045);
-          if(b.rockHP===0){say('💥 パカッ！ 岩が こわれた！ つぎはブラシ！');setPhase('polish');crack()}
-          else if(before>70&&b.rockHP<=70)say('⚡ ヒビが はいった！');
-          else if(before>35&&b.rockHP<=35)say('🔨 おおきな ヒビ！ もうすこし！');
-        }else{wrong='🪨 かたいぞ！ ハンマーを つかおう！';setPhase('break')}return}`;
-  html=html.replace(hitOld,hitNew);
-
-  html=html.replace(
-    "if(tool==='hammer'){wrong='骨のまわりは ブラシで やさしく！';return}",
-    "if(tool==='hammer'){wrong='🦴 骨のまわりは ブラシで やさしく！';setPhase('polish');return}"
-  );
-
-  const cleanOld="b.clean=Math.min(100,b.clean+10*(1-dist/(radius+28)));if(b.clean>=100){b.clean=100;b.found=true;found()}";
-  const cleanNew=`setPhase('polish');
-        const ca=Math.cos(-b.angle),sa=Math.sin(-b.angle),dx=x-b.x,dy=y-b.y;
-        const lx=dx*ca-dy*sa,ly=dx*sa+dy*ca;
-        const cols=8,rows=6,cw2=10,ch2=10,brushR=22;
-        let changed=false;
-        for(let gy=0;gy<rows;gy++)for(let gx=0;gx<cols;gx++){
-          const idx=gy*cols+gx,cx=-35+gx*cw2,cy=-25+gy*ch2;
-          if(!b.cleanGrid[idx]&&Math.hypot(cx-lx,cy-ly)<brushR){b.cleanGrid[idx]=true;changed=true}
-        }
-        const cleared=b.cleanGrid.reduce((s,v)=>s+(v?1:0),0);
-        b.clean=Math.min(100,cleared/36*100);
-        if(changed)tone(290+Math.min(140,b.clean),.025,.012);
-        if(b.clean>=92){b.clean=100;b.found=true;found()}`;
-  html=html.replace(cleanOld,cleanNew);
-
-  html=html.replace(
-    "if(wrong)say(wrong);if(!touched)tone(tool==='hammer'?105:245,.035,.02);draw()",
-    "if(wrong)say(wrong);if(!touched){setPhase('dig');tone(tool==='hammer'?105:245,.035,.02)}draw()"
-  );
-
-  html=html.replace(
-    "function found(){const n=bones.filter(b=>b.found).length;countEl.textContent=n;say('🦴 ほねを みつけた！');chime();if(n===8)setTimeout(win,650)}",
-    "function found(){const n=bones.filter(b=>b.found).length;countEl.textContent=n;say('✨ ほね はっけん！ '+n+' / 8');chime();if(navigator.vibrate)navigator.vibrate(35);if(n===8)setTimeout(win,650);else setTimeout(()=>setPhase('dig'),500)}"
-  );
-
-  html=html.replace(
-    "function choose(next){tool=next;",
-    "function choose(next){tool=next;if(next==='hammer')setPhase('break');"
-  );
-  html=html.replace(
-    "say(next==='brush'?'ブラシで 骨をきれいに！':'ハンマーで 岩をこわそう！')",
-    "say(next==='brush'?'🖌️ 骨の上を なぞって 泥をおとそう！':'🔨 岩にヒビをいれよう！')"
-  );
-
-  if(!html.includes('cleanGrid:Array(48)')||!html.includes('骨の上を なぞって'))throw new Error('ブラシ処理の組み込みに失敗しました');
-  document.open();document.write(html);document.close();
-}catch(e){
-  document.querySelector('#loading').innerHTML='<div class="error"><b>読み込みに失敗しました</b><p>'+e.message+'</p></div>';
-}
+ const url='https://raw.githubusercontent.com/soan4/ao-dinosaur-excavation-survey/c51c53d0ba0f4cda5b4f8fbcb4aa4dc8f1602a1d/index.html';
+ const res=await fetch(url,{cache:'no-store'});if(!res.ok)throw new Error('ゲーム本体を読み込めませんでした');
+ let html=await res.text();
+ html=html.replace('const cols=8,rows=6,cw2=10,ch2=10,brushR=22;','const cols=8,rows=6,cw2=10,ch2=10,brushR=13;');
+ html=html.replace('gameplay v2.1','gameplay v2.2');
+ if(!html.includes('brushR=13'))throw new Error('ブラシ速度の調整に失敗しました');
+ document.open();document.write(html);document.close();
+}catch(e){document.querySelector('#loading').innerHTML='<div class="error"><b>読み込みに失敗しました</b><p>'+e.message+'</p></div>'}
 })();
 </script>
 </body>
