@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>あおの きょうりゅう はっくつたい gameplay v2.4</title>
+<title>あおの きょうりゅう はっくつたい gameplay v2.5</title>
 <style>html,body{margin:0;min-height:100%;background:#bde4df;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif}.loading{min-height:100dvh;display:grid;place-items:center;text-align:center;padding:24px;color:#573720}.error{color:#9b3326}</style>
 </head>
 <body>
-<div class="loading" id="loading"><div><b>🦖 gameplay v2.4 を準備しています</b><p>みがき進捗を見やすい位置へ移動しています…</p></div></div>
+<div class="loading" id="loading"><div><b>🦖 gameplay v2.5 を準備しています</b><p>泥の見た目を3段階にしています…</p></div></div>
 <script>
 (async()=>{
 try{
@@ -16,15 +16,14 @@ try{
   let page=await res.text();
 
   page=page.replace('const cols=8,rows=6,cw2=10,ch2=10,brushR=22;','const cols=8,rows=6,cw2=10,ch2=10,brushR=8;');
-  page=page.replace('gameplay v2.1','gameplay v2.4');
+  page=page.replace('gameplay v2.1','gameplay v2.5');
 
-  // 上段の「ほる・わる・みがく」3分割ガイドを生成しない。
   page=page.replace(/const missionNew=missionOld\+`<div class="phase-guide"[\s\S]*?<\/div>`;\n  html=html\.replace\(missionOld,missionNew\);/, "const missionNew=missionOld;\n  html=html.replace(missionOld,missionNew);");
 
   const marker="if(!html.includes('cleanGrid:Array(48)')||!html.includes('骨の上を なぞって'))throw new Error('ブラシ処理の組み込みに失敗しました');";
   const enhancement=`
   const polishCss=\`
-  .polish-panel{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;width:100%;padding:7px 10px;background:#fff4d8eF;border:3px solid #68432b;border-radius:13px;box-shadow:0 3px #68432b55;color:#573720;min-height:54px}
+  .polish-panel{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;width:100%;padding:7px 10px;background:#fff4d8ef;border:3px solid #68432b;border-radius:13px;box-shadow:0 3px #68432b55;color:#573720;min-height:54px}
   .polish-title{min-width:94px}.polish-panel h4{margin:0;font-size:14px;line-height:1.1}.polish-stage{font-size:10px;font-weight:900;line-height:1.25;margin-top:2px}
   .polish-bar{height:14px;border:2px solid #573720;border-radius:999px;background:#3e3e38;overflow:hidden;min-width:70px}
   .polish-fill{height:100%;width:0%;background:linear-gradient(90deg,#85cf39,#d2ee54);transition:width .08s linear}
@@ -34,6 +33,25 @@ try{
   \`;
   html=html.replace('</style>',polishCss+'</style>');
   html=html.replace(missionOld, missionOld+'<div class="polish-panel" id="polishPanel"><div class="polish-title"><h4>✨ みがきちゅう！</h4><div class="polish-stage" id="polishStage">骨を みつけよう！</div></div><div class="polish-bar"><div class="polish-fill" id="polishFill"></div></div><div class="polish-percent" id="polishPercent">0%</div><div class="almost" id="almost">✨ あと少し！</div></div>');
+
+  const oldMud=\`ctx.fillStyle=((gx+gy)%3===0)?'#a96d36':'#b77b3e';
+              ctx.fillRect(px,py,cw2+1,ch2+1);\`;
+  const newMud=\`if(b.clean<35){
+                ctx.globalAlpha=.94;
+                ctx.fillStyle=((gx+gy)%3===0)?'#8c552b':'#a96532';
+                ctx.fillRect(px-1,py-1,cw2+3,ch2+3);
+              }else if(b.clean<75){
+                ctx.globalAlpha=.70;
+                ctx.fillStyle=((gx+gy)%2===0)?'#bd8954':'#c99a68';
+                ctx.beginPath();ctx.ellipse(px+5,py+5,5.2,4.1,0,0,7);ctx.fill();
+              }else{
+                ctx.globalAlpha=.52;
+                ctx.fillStyle=((gx*3+gy)%2===0)?'#9f784f':'#c3a078';
+                ctx.beginPath();ctx.arc(px+3+(gx%2)*3,py+3+(gy%2)*3,1.7+(idx%3)*.45,0,7);ctx.fill();
+                if(idx%4===0){ctx.beginPath();ctx.arc(px+8,py+7,1.1,0,7);ctx.fill()}
+              }\`;
+  html=html.replace(oldMud,newMud);
+
   html=html.replace("function setPhase(next){", \`function resetPolishPanel(){
       const panel=document.querySelector('#polishPanel');if(!panel)return;
       document.querySelector('#polishFill').style.width='0%';
@@ -43,11 +61,11 @@ try{
     }
     function updatePolishPanel(b){
       const panel=document.querySelector('#polishPanel');if(!panel)return;
-      if(!b||b.found||b.rockHP>0){return}
+      if(!b||b.found||b.rockHP>0)return;
       const pct=Math.max(0,Math.min(100,Math.round(b.clean||0)));
       document.querySelector('#polishFill').style.width=pct+'%';
       document.querySelector('#polishPercent').textContent=pct+'%';
-      document.querySelector('#polishStage').textContent=pct<35?'① 泥のかたまり':pct<75?'② うすい泥':'③ さいごの よごれ';
+      document.querySelector('#polishStage').textContent=pct<35?'① 濃い泥を おとそう':pct<75?'② 薄い泥を おとそう':'③ 細かな汚れを おとそう';
       document.querySelector('#almost').classList.toggle('show',pct>=80&&pct<100);
     }
     function setPhase(next){\`);
@@ -57,7 +75,7 @@ try{
   `+marker;
 
   page=page.replace(marker,enhancement);
-  if(!page.includes('brushR=8')||!page.includes('みがきちゅう！')||page.includes('missionNew=missionOld+`<div class="phase-guide"'))throw new Error('v2.4 の組み込みに失敗しました');
+  if(!page.includes('brushR=8')||!page.includes('細かな汚れ')||page.includes('missionNew=missionOld+`<div class="phase-guide"'))throw new Error('v2.5 の組み込みに失敗しました');
   document.open();document.write(page);document.close();
 }catch(e){document.querySelector('#loading').innerHTML='<div class="error"><b>読み込みに失敗しました</b><p>'+e.message+'</p></div>'}
 })();
