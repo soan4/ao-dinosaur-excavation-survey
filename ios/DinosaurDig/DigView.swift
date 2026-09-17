@@ -29,15 +29,6 @@ struct DigView: View {
                     SpriteView(scene:scene, options:[.ignoresSiblingOrder])
                         .accessibilityIdentifier("digField")
                         .accessibilityLabel(store.active == nil ? "発掘フィールド。ブラシでなぞり、岩はハンマーでタップ" : "骨のみがき面。茶色のよごれをなぞる")
-                    VStack {
-                        HStack {
-                            Label(store.active == nil ? "FIELD 01" : "LAB / \(store.active!.rawValue+1)",systemImage:store.active == nil ? "safari" : "sparkle")
-                                .font(.system(size:10,weight:.heavy,design:.monospaced))
-                                .padding(8).background(.black.opacity(0.3),in:Capsule()).foregroundStyle(.white)
-                            Spacer()
-                        }
-                        Spacer()
-                    }.padding(10).allowsHitTesting(false)
                 }
                 .clipShape(RoundedRectangle(cornerRadius:24))
                 .overlay(RoundedRectangle(cornerRadius:24).strokeBorder(Color(red:0.43,green:0.30,blue:0.19),lineWidth:4))
